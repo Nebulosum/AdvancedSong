@@ -30,7 +30,7 @@ namespace ASong
                 }
 
                 // Burn to ROM
-                bw = new BinaryWriter(File.OpenWrite(rom));
+                bw = new BinaryWriter(File.Open(rom, FileMode.Open));
 
                 // write tracks
                 bw.BaseStream.Seek(writeTracksTo, SeekOrigin.Begin);
@@ -104,6 +104,10 @@ namespace ASong
                 }
 
                 bw.Dispose();
+            }
+            catch (FileNotFoundException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

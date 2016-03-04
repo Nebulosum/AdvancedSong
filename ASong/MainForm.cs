@@ -199,8 +199,7 @@ namespace ASong
             {
                 Disassembler.DisassembleM4A(saveFileDialog.FileName, romFilePath, song);
 
-                MessageBox.Show("Song disassembled successfully!", "Yay!",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Song disassembled successfully!", "Yay!", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -566,28 +565,52 @@ namespace ASong
 
         private void bSongMinus_Click(object sender, EventArgs e)
         {
+            // Store old value in case we need to revert
+            uint oldValue = txtSong.Value;
+
             // Subtract one
             uint val = txtSong.Value - 1;
             if (val < 0) val = (uint)gameInfo.SongCount - 1;
 
-            // Update
-            txtSong.Value = val;
-            UpdateSongName();
+            try
+            {
+                // Update
+                txtSong.Value = val;
+                UpdateSongName();
 
-            ChangeSong();
+                ChangeSong();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                xx = true;
+                txtSong.Value = oldValue;
+            }
         }
 
         private void bSongPlus_Click(object sender, EventArgs e)
         {
+            // Store old value in case we need to revert
+            uint oldValue = txtSong.Value;
+
             // Add one
             uint val = txtSong.Value + 1;
             if (val >= gameInfo.SongCount) val = 0;
 
-            // Update
-            txtSong.Value = val;
-            UpdateSongName();
+            try
+            {
+                // Update
+                txtSong.Value = val;
+                UpdateSongName();
 
-            ChangeSong();
+                ChangeSong();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                xx = true;
+                txtSong.Value = oldValue;
+            }
         }
 
         private void UpdateSongName()
@@ -598,7 +621,7 @@ namespace ASong
             {
                 TrySelectSong(gameInfo.GetSongName(song));
             } xx = false;
-        }
+}
 
         private void UpdateSongID()
         {

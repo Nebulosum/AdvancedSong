@@ -84,8 +84,8 @@ namespace ASong
             while (!exit)
             {
                 Command cmd = new Command();
-                cmd.absoulteOffset = (uint)br.BaseStream.Position;
-                cmd.relativeOffset = cmd.absoulteOffset - startOffset;
+                cmd.absoluteOffset = (uint)br.BaseStream.Position;
+                cmd.relativeOffset = cmd.absoluteOffset - startOffset;
                 cmd.parameters = null;
                 cmd.insertLabel = false;
 
@@ -353,7 +353,7 @@ namespace ASong
 
                     for (int i = 0; i < commands.Count; i++)
                     {
-                        if (commands[i].absoulteOffset == jumpOff)
+                        if (commands[i].absoluteOffset == jumpOff)
                         {
                             commands[i].insertLabel = true;
                             break;
@@ -377,7 +377,7 @@ namespace ASong
                 if (cmd.insertLabel)
                 {
                     string lbl = trackName + "_" + labelNo;
-                    labels.Add(cmd.absoulteOffset, lbl);
+                    labels.Add(cmd.absoluteOffset, lbl);
 
                     sw.WriteLine(lbl + ":");
                     labelNo++;
@@ -625,7 +625,7 @@ namespace ASong
         /// </summary>
         private class Command
         {
-            public uint absoulteOffset, relativeOffset;
+            public uint absoluteOffset, relativeOffset;
 
             public byte value;
             public uint[] parameters;
