@@ -66,6 +66,7 @@
     <Compile Include="AssembleSongDialog.Designer.cs">
       <DependentUpon>AssembleSongDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Command.cs" />
     <Compile Include="Conversion\Wave.cs" />
     <Compile Include="Disassembler.cs" />
     <Compile Include="FreeSpaceFinderDialog.cs">
@@ -115,12 +116,7 @@
       <DependentUpon>SongListForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Tasks.cs" />
-    <Compile Include="TrackEditorForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="TrackEditorForm.Designer.cs">
-      <DependentUpon>TrackEditorForm.cs</DependentUpon>
-    </Compile>
+    <Compile Include="TrackEditor.cs" />
     <Compile Include="VoicegroupEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -166,9 +162,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="SongListForm.resx">
       <DependentUpon>SongListForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="TrackEditorForm.resx">
-      <DependentUpon>TrackEditorForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="VoicegroupEditorForm.resx">
       <DependentUpon>VoicegroupEditorForm.cs</DependentUpon>

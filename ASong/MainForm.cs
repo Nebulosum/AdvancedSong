@@ -77,7 +77,7 @@ namespace ASong
             txtSong.Enabled = false;
             bSongMinus.Enabled = false;
             bSongPlus.Enabled = false;
-            bEditTrack.Enabled = false;
+            bSaveTrack.Enabled = false;
         }
 
         private void UnlockControls()
@@ -97,6 +97,7 @@ namespace ASong
             txtSong.Enabled = true;
             bSongMinus.Enabled = true;
             bSongPlus.Enabled = true;
+            bSaveTrack.Enabled = true;
         }
 
         #region Menu
@@ -126,7 +127,14 @@ namespace ASong
                 if (result == OpenROMResult.Success)
                 {
                     UnlockControls();
+                    lstTrackEvents.Items.Clear();
                     ChangeSong();
+
+                    // Select song number 1
+                    if (gameInfo.SongCount > 0)
+                    {
+                        txtSong.Value = 1;
+                    }
                 }
                 else if (result == OpenROMResult.NoM4A)
                 {
@@ -509,8 +517,7 @@ namespace ASong
                 item.SubItems.Add("0x" + song.Tracks[i].ToString("X"));
                 lstTracks.Items.Add(item);
             }
-
-            bEditTrack.Enabled = false;
+            
             xx = false;
         }
 
@@ -658,32 +665,128 @@ namespace ASong
             foreach (int x in lstTracks.SelectedIndices) trackNum = x;
 
             if (trackNum >= 0)
-                bEditTrack.Enabled = true;
-            else
-                bEditTrack.Enabled = false;
+            {
+                // Just a safety check (hopefully not needed)
+                if (song.ID >= gameInfo.SongCount) return;
+                
+                // Get track data and update list view
+                TrackEditor trackEditor = new TrackEditor(romFilePath, song.Tracks[trackNum]);
+                UpdateTrackListView(trackEditor.GetTrackData());
+
+                // Reload if necessary
+                //if (tef.NeedToReloadMainForm) ChangeSong();
+            }
         }
 
-        private void bEditTrack_Click(object sender, EventArgs e)
+        private void UpdateTrackListView(List<Command> trackData)
         {
-            // Just a safety check (hopefully not needed)
-            if (song.ID >= gameInfo.SongCount) return;
+            // Let's do it.
+            lstTrackEvents.Items.Clear();
+            foreach (Command cmd in trackData)
+            {
+                ListViewItem item = new ListViewItem();
+                item.Text = Disassembler.GetCommandName(cmd.Value);
+                item.SubItems.Add(cmd.Value.ToString("X2"));
 
-            // Get selected track
-            int trackNum = 0;
-            foreach (int x in lstTracks.SelectedIndices) trackNum = x;
+                // Show command args, and color.
+                if (cmd is Repeat)
+                {
+                    Repeat r = (Repeat)cmd;
+                    item.SubItems[1].Text = "--";
+                    item.BackColor = Color.MediumSeaGreen;
 
-            // Show editor
-            TrackEditorForm tef = new TrackEditorForm(romFilePath, song.Tracks[trackNum]);
-            tef.Text = "Edit Track " + song.ID + "-" + (trackNum + 1) + " @ 0x" + song.Tracks[trackNum].ToString("X");
-            tef.TrackSaved += TrackEditorForm_TrackSaved;
-            tef.ShowDialog();
+                    if (r.Arguments.Count == 1)
+                    {
+                        item.SubItems.Add(((NoteKeys)r.Arguments[0]).ToString());
+                    }
+                    else if (r.Arguments.Count == 2)
+                    {
+                        item.SubItems.Add(((NoteKeys)r.Arguments[0]).ToString() +
+                            ", " + ((NoteVelocity)r.Arguments[1]).ToString());
+                    }
+                }
+                else if (cmd is Jump)
+                {
+                    Jump jmp = (Jump)cmd;
+                    item.BackColor = Color.LightPink;
+                    item.SubItems.Add("@" + jmp.RelativePointer.ToString("X"));
 
-            // Reload if necessary
-            //if (tef.NeedToReloadMainForm) ChangeSong();
+                    // Color the correct jump-to destination (I will assume we always jump back)
+                    int k = 0; // To get the listView index. :P
+                    foreach (Command cmd2 in trackData)
+                    {
+                        if (cmd2.RelativeOffset == jmp.RelativePointer && k < lstTrackEvents.Items.Count)
+                        {
+                            // Color appropriately.
+                            if (jmp.Value == (byte)MPlayDef.GOTO)
+                                lstTrackEvents.Items[k].ForeColor = Color.Red;
+                            else
+                                lstTrackEvents.Items[k].ForeColor = Color.Purple;
+                            // End
+                            break;
+                        }
+                        k++;
+                    }
+                }
+                else if (cmd is Generic)
+                {
+                    Generic gen = (Generic)cmd;
+                    if (cmd.Value > 0xCF)
+                    {
+                        item.BackColor = Color.MediumSeaGreen;
+
+                        if (gen.Arguments.Count == 1)
+                        {
+                            item.SubItems.Add(((NoteKeys)gen.Arguments[0]).ToString());
+                        }
+                        else if (gen.Arguments.Count == 2)
+                        {
+                            item.SubItems.Add(((NoteKeys)gen.Arguments[0]).ToString() +
+                                ", " + ((NoteVelocity)gen.Arguments[1]).ToString());
+                        }
+                    }
+                    else
+                    {
+                        item.BackColor = Color.LightSkyBlue;
+
+                        if (gen.Arguments.Count > 0)
+                        {
+                            string args = "";
+                            for (int i = 0; i < gen.Arguments.Count; i++)
+                            {
+                                if (i != 0) args += ", ";
+                                args += gen.Arguments[i].ToString("X2");
+                            }
+                            item.SubItems.Add(args);
+                        }
+                    }
+                }
+                else if (cmd is xCommand)
+                {
+                    xCommand x = (xCommand)cmd;
+                    item.BackColor = Color.PaleVioletRed;
+                    item.SubItems.Add(x.xValue.ToString("X"));
+                    item.SubItems.Add("This command needs more research!");
+                }
+                else if (cmd.Value == 0xB1)
+                {
+                    item.BackColor = Color.PaleVioletRed;
+                }
+                else if (cmd.Value == 0xB4)
+                {
+                    item.BackColor = Color.LightPink;
+                }
+                else
+                {
+                    item.BackColor = Color.MediumSeaGreen;
+                }
+
+                lstTrackEvents.Items.Add(item);
+            }
         }
 
         // Called whenever a track editor presses the save button.
-        private void TrackEditorForm_TrackSaved(TrackEditorForm.TrackSavedEventArgs e)
+        private void TrackEditor_TrackSaved(TrackEditor.TrackSavedEventArgs e)
         {
             // Repoint all references to mah track, yo!
             if (e.Repointed)
